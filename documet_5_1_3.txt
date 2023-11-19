@@ -1,0 +1,341 @@
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+using namespace std;
+
+#define BQ_OK               0
+#define BQ_ERROR            (int)(-1)
+
+#define MAX_BOUQUET_SIZE    30
+
+#define STEM_LEN_MIN        30
+#define STEM_LEN_MAX        70
+
+#define PETALS_NUM_MIN      10
+#define PETALS_NUM_MAX      29
+
+// color indexes
+enum color_e {
+    COLOR_NOCOLOR = 0,
+    COLOR_RED,
+    COLOR_FIRST = COLOR_RED,
+    COLOR_BLUE,
+    COLOR_YELLOW,
+    COLOR_LAST = COLOR_YELLOW
+};
+
+// color indexes to color names map
+static string _color_names[] = { 
+    [COLOR_NOCOLOR] = "nocolor",
+    [COLOR_RED]     = "red", 
+    [COLOR_BLUE]    = "blue", 
+    [COLOR_YELLOW]  = "yellow"
+};
+
+// kind indexes
+enum kind_e {
+    KIND_NONAME = 0, 
+    KIND_ROSE, 
+    KIND_FIRST = KIND_ROSE,
+    KIND_ASTER, 
+    KIND_IRIS, 
+    KIND_VIOLET, 
+    KIND_NARCISSUS,
+    KIND_DAISY, 
+    KIND_LILY, 
+    KIND_CAMOMILE, 
+    KIND_ORCHID,
+    KIND_LAST = KIND_ORCHID
+};
+
+// kind indexes to flower names map
+static string _kind_names[] = {
+    [KIND_NONAME]    = "noname", 
+    [KIND_ROSE]      = "rose", 
+    [KIND_ASTER]     = "aster", 
+    [KIND_IRIS]      = "iris", 
+    [KIND_VIOLET]    = "violet", 
+    [KIND_NARCISSUS] = "narcissus",
+    [KIND_DAISY]     = "daisy", 
+    [KIND_LILY]      = "lily", 
+    [KIND_CAMOMILE]  = "camomile", 
+    [KIND_ORCHID]    = "orchid", 
+};
+
+// the Flower structure as required in the Exercise 5.1
+struct flower_s { 
+    double stem_len;
+    int    petals_num;
+    string color;
+    string name;
+    bool   seasonal;
+};
+
+/*
+ * Exercise 5.1: Function#1: Get a flower and display it.
+ */
+static void _flower_print(flower_s *p_flower)
+{    
+    char tmp[64];
+    string str;
+
+    // do nothing with NULL pointer
+    if ( !p_flower ) {
+        cout << "The flower memory is not available!" << endl;
+        return;
+    }
+
+   // some cosmetic output format
+    sprintf(tmp, "%6s %10s", p_flower->color.data(), p_flower->name.data());
+    str = tmp;
+
+    // print the flower    
+    cout << str << ",  stem=" << p_flower->stem_len;
+    cout << ", petals=" << p_flower->petals_num << ", seasonal=" << p_flower->seasonal << endl;
+
+    return;
+}
+
+/*
+ * Print the entire Bouquet 
+ */
+static void bouquet_print(struct flower_s *bouquet, int flowers_num)
+{
+    char tmp[16];
+    string str;
+    int i;
+    
+    /* check if the bouquet isn't empty */
+    if ( !bouquet || !flowers_num || !bouquet[0].name[0] ) {
+        cout << "The bouquet is empty!" << endl;
+        return;
+    }
+    
+    cout << "Flowers number: " << flowers_num << endl;
+    for (i = 0; i < flowers_num; i++ ) {
+        sprintf(tmp, "%2d", i);
+        str = tmp;
+        cout << "[" << str << "]: ";
+        _flower_print(&bouquet[i]);
+    }
+    cout << endl;
+    
+    return;
+}
+
+/*
+ * Print the stem lenghts only of the Bouquet 
+ */
+static void bouquet_stems_print(struct flower_s *bouquet, int flowers_num)
+{
+    int i;
+    
+    /* check if the bouquet isn't empty */
+    if ( !bouquet || !flowers_num || !bouquet[0].name[0] ) {
+        cout << "The bouquet is empty!" << endl;
+        return;
+    }
+    
+    cout << "Flowers number: " << flowers_num << ", stem lengths 'color[index]': " << endl;
+    for (i = 0; i < flowers_num; i++ ) {
+        cout << bouquet[i].color[0] << "[" << i << "]=" << bouquet[i].stem_len << ", ";
+    }
+    cout << "\b\b" << endl;
+    
+    return;
+}
+    
+/* Get random integer number in specified range(including the given low and high)
+ */
+static int int_rand_get(int min_num, int max_num)
+{
+    int range, num;
+
+    range = max_num - min_num  + 1;
+    // check if user wants a single value range, return it back as number
+    if ( !range ) {
+        return max_num;
+    }
+    // get random number in specified range
+    num = (std::rand() + std::time(0)) % range + min_num;
+
+    return num;
+}
+
+/*
+ * Exercise 5.1: Function#2: Make random flower.
+ */
+static int flower_rand_get(struct flower_s *p_flower)
+{
+    int color_idx, kind_idx, stem_len, petals_num;
+    bool seasonal;
+
+    // do nothing with NULL pointer
+    if ( !p_flower ) {
+        cout << "The flower memory is not available!" << endl;
+        return BQ_ERROR;
+    }
+
+    // use random integer number get function
+    color_idx = int_rand_get(COLOR_FIRST, COLOR_LAST);
+    kind_idx = int_rand_get(KIND_FIRST, KIND_LAST);
+    stem_len = int_rand_get(STEM_LEN_MIN, STEM_LEN_MAX);
+    petals_num = int_rand_get(PETALS_NUM_MIN, PETALS_NUM_MAX);
+    seasonal = int_rand_get(0, 1);
+
+    // fill the output structure
+    p_flower->color = _color_names[color_idx];
+    p_flower->name  = _kind_names[kind_idx];
+    p_flower->stem_len = stem_len;
+    p_flower->petals_num = petals_num;
+    p_flower->seasonal = seasonal;
+    
+    return BQ_OK;
+}
+
+/*
+ * Exercise 5.1: Function#3: Make manually inputted flower.
+ */
+static int flower_man_get(struct flower_s *p_flower)
+{
+    int color_idx, kind_idx, stem_len, petals_num;
+    bool seasonal;
+
+    // do nothing with NULL pointer
+    if ( !p_flower ) {
+        cout << "The flower memory is not available!" << endl;
+        return BQ_ERROR;
+    }
+
+    // fill the structure by user parameters
+    cout << "Enter the 'color': ";
+    cin >> p_flower->color;
+    cout << "Enter the 'name': ";
+    cin >> p_flower->name;
+    cout << "Enter the stem length: ";
+    cin >> p_flower->stem_len;
+    cout << "Enter the petals number: ";
+    cin >> p_flower->petals_num;
+    cout << "Is the flower seasonal? 0 or 1: ";
+    cin >> p_flower->seasonal;
+
+    return BQ_OK;
+}
+    
+/*
+ * Exercise 5.3: Bouquet sorting routine 
+ */
+static void bouquet_sort(struct flower_s *bq, int flowers_num)
+{
+    int n = flowers_num, i;
+    struct flower_s tmp;
+  
+    // do nothing with NULL pointer
+    if ( !bq ) {
+        cout << "The bouquet memory is not available!" << endl;
+        return;
+    }
+  
+    // one element or less - do nothing 
+    if ( flowers_num <= 1 ) {
+        return;
+    }
+    
+    // do bubble sort with color check
+    while ( n - 1 ) {
+        for (i = 0; i < n - 1; i++ ) {
+            /* yellow: always if the next isn't yellow OR less - swap */
+            if ( !bq[i].color.compare("yellow") && 
+                 (bq[i + 1].color.compare("yellow") || bq[i].stem_len > bq[i + 1].stem_len) ) {
+                tmp = bq[i];
+                bq[i] = bq[i + 1];
+                bq[i + 1] = tmp;
+            }
+            /* blue: if the next is red OR (blue AND less) - swap */
+            else if ( !bq[i].color.compare("blue") && 
+                      (!bq[i + 1].color.compare("red") || 
+                      (!bq[i + 1].color.compare("blue") && bq[i].stem_len > bq[i + 1].stem_len)) ) {
+                tmp = bq[i];
+                bq[i] = bq[i + 1];
+                bq[i + 1] = tmp;
+            }
+            /* red: only if the next is red AND less - swap */
+            else if ( !bq[i].color.compare("red") && 
+                      !bq[i + 1].color.compare("red") && bq[i].stem_len > bq[i + 1].stem_len ) {
+                tmp = bq[i];
+                bq[i] = bq[i + 1];
+                bq[i + 1] = tmp;
+            }
+        }
+        n--;
+    }
+    
+    return;
+}
+    
+int main(void)
+{
+    struct flower_s *bouquet;
+    int bouquet_size = 0, i, rc;
+    bool is_manual = 0;
+
+    // flowers number input
+    cout << endl << "Enter the flowers number: ";
+    cin  >> bouquet_size;
+
+    // flowers making mode
+    cout << endl << "Wanna fill Manually (0 or 1)? ";
+    cin  >> is_manual;
+   
+    // check input parameter 
+    if ( !bouquet_size || bouquet_size > MAX_BOUQUET_SIZE )
+    {
+        cout << "The flowers number " << bouquet_size << " is incorrect" << endl;
+        return BQ_ERROR;
+    }
+    
+    // allocate the bouquet memory
+    bouquet = new struct flower_s[bouquet_size];
+    if ( bouquet == 0 ) {
+        cout << "ERROR! Can't allocate memory" << endl;
+        return BQ_ERROR;
+    }
+
+    // check the making mode
+    if ( !is_manual ) {
+        // make bouquet randomly
+        for ( i = 0; i < bouquet_size; i++ ) {
+            rc = flower_rand_get(&bouquet[i]);
+            if ( rc != BQ_OK )
+                return rc;
+        }
+    }
+    else {
+        // make bouquet manually
+        for ( i = 0; i < bouquet_size; i++ ) {
+            cout << "*** Flower[" << i << "]:" << endl;
+            rc = flower_man_get(&bouquet[i]);
+            if ( rc != BQ_OK )
+                return rc;
+        }   
+    }
+        
+    // display original bouquet
+    cout << "==========" << endl << "Original bouquet:" << endl;
+    bouquet_print(bouquet, bouquet_size);
+    bouquet_stems_print(bouquet, bouquet_size);
+
+    // sort the bouquet using the Exercise 5.3 routine
+    bouquet_sort(bouquet, bouquet_size);
+
+    // display sorted bouquet
+    cout << "==========" << endl << "Sorted bouquet:" << endl;    
+    bouquet_print(bouquet, bouquet_size);
+    bouquet_stems_print(bouquet, bouquet_size);
+
+    return BQ_OK;    
+}1
